@@ -1,4 +1,4 @@
-# Cg.ProjectName
+# Cg.ProjectTemplate.Api
 
 [![CI](https://github.com/<org>/<repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<org>/<repo>/actions/workflows/ci.yml)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet)
