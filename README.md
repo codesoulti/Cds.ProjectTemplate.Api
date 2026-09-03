@@ -117,8 +117,6 @@ src/
   Cg.ProjectName.Infrastructure.CrossCutting.Shared/ # pipeline behaviors, logging
   Cg.ProjectName.Infrastructure.CrossCutting.Security/ # reservado para autenticação/autorização (ver Limitações)
   Cg.ProjectName.WebApi/                            # controllers, middleware, Swagger, CORS, Program.cs
-  Cg.ProjectName.Web/                               # scaffold MVC não utilizado pela API (ver Limitações)
-  Cg.ProjectName.Service/                           # projeto reservado para um worker/serviço dedicado, ainda vazio
 tests/
   Cg.ProjectName.Test/                              # testes de unidade (xUnit) — Domain, Application, WebApi
 ```
