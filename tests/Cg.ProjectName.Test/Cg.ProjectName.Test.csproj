@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Necessário para instanciar tipos ASP.NET Core (DefaultHttpContext,
+         IHostEnvironment) nos testes de ValidationExceptionMiddleware, sem
+         precisar de um servidor HTTP real de verdade (TestServer/WebApplicationFactory)
+         só para testar mapeamento de exceção -> status code. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Referências necessárias para exercitar Domain (entidades, validators)
+         e Application (validators de comando, FluentValidation) sem precisar
+         de banco de dados. Infrastructure.Data é referenciado à parte: os
+         testes de DapperSqlBuilder/DapperMapping exercitam só a GERAÇÃO do
+         SQL (texto + parâmetros), nunca uma conexão real — não precisam de
+         banco de dados, apenas do assembly onde esse código vive.
+         Cg.ProjectName.WebApi é referenciado para exercitar
+         ValidationExceptionMiddleware diretamente — o único lugar que decide
+         400/401/404/409/500 para toda a API e que não tinha nenhum teste. -->
+    <ProjectReference Include="..\..\src\Cg.ProjectName.Domain\Cg.ProjectName.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Cg.ProjectName.Application\Cg.ProjectName.Application.csproj" />
+    <ProjectReference Include="..\..\src\Cg.ProjectName.Infrastructure.Data\Cg.ProjectName.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\..\src\Cg.ProjectName.WebApi\Cg.ProjectName.WebApi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

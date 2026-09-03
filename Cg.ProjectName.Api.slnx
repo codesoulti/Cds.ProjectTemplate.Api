@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/1-Api/">
+    <Project Path="src/Cg.ProjectName.WebApi/Cg.ProjectName.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/src/2-Application/">
+    <Project Path="src/Cg.ProjectName.Application/Cg.ProjectName.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/3-Domain/">
+    <Project Path="src/Cg.ProjectName.Domain/Cg.ProjectName.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/4-Infrastructure/" />
+  <Folder Name="/src/4-Infrastructure/4-1-Data/">
+    <Project Path="src/Cg.ProjectName.Infrastructure.Data/Cg.ProjectName.Infrastructure.Data.csproj" />
+  </Folder>
+  <Folder Name="/src/4-Infrastructure/4-2-CrossCutting/">
+    <Project Path="src/Cg.ProjectName.Infrastructure.CrossCutting.Ioc/Cg.ProjectName.Infrastructure.CrossCutting.Ioc.csproj" />
+    <Project Path="src/Cg.ProjectName.Infrastructure.CrossCutting.Security/Cg.ProjectName.Infrastructure.CrossCutting.Security.csproj" />
+    <Project Path="src/Cg.ProjectName.Infrastructure.CrossCutting.Shared/Cg.ProjectName.Infrastructure.CrossCutting.Shared.csproj" Id="cf9accbf-55e2-48c1-97d3-5a3be445fc2d" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Cg.ProjectName.Test/Cg.ProjectName.Test.csproj" Id="0a9b8353-b713-48a2-9f10-7a6dfe68fb73" />
+  </Folder>
+</Solution>
