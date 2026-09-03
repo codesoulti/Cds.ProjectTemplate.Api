@@ -220,6 +220,4 @@ A especificação completa (schemas, exemplos de request/response) está dispon�
 Este repositório é publicado com transparência sobre o que ainda falta — nenhum desses pontos foi escondido:
 
 - **Sem autenticação/autorização.** Não há nenhum esquema de autenticação configurado (o projeto `Cg.ProjectName.Infrastructure.CrossCutting.Security` existe como stub reservado para isso). Antes de qualquer uso além de demonstração/portfólio, é necessário adicionar um esquema real (JWT Bearer, OAuth2/OpenID Connect, etc.), proteger os controllers com `[Authorize]` e habilitar o `AddSecurityRequirement` já preparado (comentado) em `SwaggerConfiguration`.
-- **`Cg.ProjectName.Web`** é o scaffold padrão do `dotnet new mvc`, mantido no repositório apenas como referência de como um front-end MVC tradicional poderia coexistir na mesma solution — não é consumido pela API e pode ser removido sem impacto.
-- **`Cg.ProjectName.Service`** é um projeto vazio, reservado para um worker/serviço dedicado (ex.: um `BackgroundService` ou `Worker` separado da API), ainda não implementado.
 - Este README documenta o estado do template; ajuste-o conforme o projeto real evoluir a partir daqui.
