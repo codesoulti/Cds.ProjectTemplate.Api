@@ -31,6 +31,9 @@ public sealed class DemoOfficeConfiguration
             .IsRequired()
             .HasConversion<int>();
 
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
+
         // Índice único filtrado: sem isso, uma filial soft-deleted travaria
         // o nome para sempre — GetOrCreateByNameAsync nunca conseguiria
         // recriar uma filial com o mesmo nome de uma desativada.

@@ -2,7 +2,7 @@ using Cg.ProjectName.Domain.Entities.Demos;
 using Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoOfficies;
 using Cg.ProjectName.Domain.Options.Dapper;
 using Cg.ProjectName.Infrastructure.Data.Contexts.Dapper;
-using Cg.ProjectName.Infrastructure.Data.Repositories.Base.Dapper;
+using Cg.ProjectName.Infrastructure.Data.Repositories.Base;
 
 namespace Cg.ProjectName.Infrastructure.Data.Repositories.Demos.DemoOfficies;
 
@@ -15,7 +15,7 @@ namespace Cg.ProjectName.Infrastructure.Data.Repositories.Demos.DemoOfficies;
 /// nenhum dos dois.
 /// </summary>
 public class DemoOfficeReadRepository(IDbConnectionFactory connectionFactory)
-    : DapperRepository<DemoOffice, Guid>(connectionFactory),
+    : ReadRepository<DemoOffice, Guid>(connectionFactory),
     IDemoOfficeReadRepository
 {
     public async Task<DemoOffice?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
@@ -24,7 +24,7 @@ public class DemoOfficeReadRepository(IDbConnectionFactory connectionFactory)
         // máximo uma linha pode corresponder — FirstOrDefault é suficiente,
         // sem o custo extra de uma consulta paginada (que dispararia também
         // uma query de COUNT desnecessária).
-        var result = await QueryAsync(
+        var result = await QueryListAsync(
             new DapperQueryOptions<DemoOffice>
             {
                 Where = x => x.Name == name

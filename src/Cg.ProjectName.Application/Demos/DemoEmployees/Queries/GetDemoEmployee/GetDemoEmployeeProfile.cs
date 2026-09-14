@@ -1,5 +1,6 @@
 using AutoMapper;
 using Cg.ProjectName.Domain.Entities.Demos;
+using Cg.ProjectName.Domain.ValueObjects.Demos.DemoEmployees;
 
 namespace Cg.ProjectName.Application.Demos.DemoEmployees.Queries.GetDemoEmployee;
 
@@ -18,6 +19,7 @@ public class GetDemoEmployeeProfile : Profile
         // com DemoOffices) em vez do GetByIdAsync genérico de tabela única,
         // para que o detalhe de um funcionário também exponha OfficeName —
         // antes só a listagem trazia esse campo.
-        CreateMap<DemoEmployeeListItem, GetDemoEmployeeDto>();
+        CreateMap<DemoEmployee, GetDemoEmployeeDto>();
+        CreateMap<DemoEmployeeResult, GetDemoEmployeeDto>();
     }
 } 

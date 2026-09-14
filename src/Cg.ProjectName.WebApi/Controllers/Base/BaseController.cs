@@ -1,4 +1,5 @@
-﻿using Cg.ProjectName.Application.Shared.Paginations.Dapper;
+﻿using Cg.ProjectName.Application.Shared.ReadModels.Paginations;
+using Cg.ProjectName.Domain.ValueObjects.Paginations;
 using Cg.ProjectName.WebApi.Shared;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -37,7 +38,7 @@ public class BaseController : ControllerBase
     protected IActionResult NotFound(string message = "Resource not found") =>
         base.NotFound(new ApiResponse { Message = message, Success = false });
 
-    protected IActionResult OkPaginated<T>(DapperPaginatedListDto<T> pagedList) =>
+    protected IActionResult OkPaginated<T>(PaginatedListResult<T> pagedList) =>
             Ok(new PaginatedResponse<T>
             {
                 Data = pagedList.Items,

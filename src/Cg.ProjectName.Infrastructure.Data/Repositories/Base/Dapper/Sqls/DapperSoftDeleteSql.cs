@@ -2,7 +2,7 @@
 using Cg.ProjectName.Domain.Options.Entities;
 using Cg.ProjectName.Infrastructure.Data.Extensions.Dapper;
 
-namespace Cg.ProjectName.Infrastructure.Data.Repositories.Base.Dapper;
+namespace Cg.ProjectName.Infrastructure.Data.Repositories.Base.Dapper.Sqls;
 
 public static class DapperSoftDeleteSql
 {
@@ -11,7 +11,7 @@ public static class DapperSoftDeleteSql
         if (!SoftDeleteOptions.Enabled)
             return string.Empty;
 
-        if (!SoftDeleteExtensions.IsSoftDeletable<TEntity>())
+        if (!DapperSoftDeleteExtensions.IsSoftDeletable<TEntity>())
             return string.Empty;
 
         return !alias.IsNullOrWhiteSpace() ? $" {alias}.IsDeleted = 0" : $" IsDeleted = 0";

@@ -1,12 +1,12 @@
 ﻿using Cg.ProjectName.Application.Interfaces.Shared;
-using Cg.ProjectName.Domain.Interfaces.Repositories;
+using Cg.ProjectName.Domain.Interfaces.Repositories.Base;
 using Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoEmployees;
 using Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoOfficies;
 using Cg.ProjectName.Infrastructure.CrossCutting.Ioc.Configurations;
 using Cg.ProjectName.Infrastructure.Data.Contexts.Dapper;
 using Cg.ProjectName.Infrastructure.Data.Contexts.EfCore;
 using Cg.ProjectName.Infrastructure.Data.Interceptors;
-using Cg.ProjectName.Infrastructure.Data.Repositories.Base.EfCore;
+using Cg.ProjectName.Infrastructure.Data.Repositories.Base;
 using Cg.ProjectName.Infrastructure.Data.Repositories.Demos.DemoEmployees;
 using Cg.ProjectName.Infrastructure.Data.Repositories.Demos.DemoOfficies;
 using Cg.ProjectName.Infrastructure.Data.UnitOfWork;
@@ -56,7 +56,7 @@ public class InfrastructureModuleInitializer : IModuleInitializer
                 .AddInterceptors(interceptor);
         });
 
-        services.AddScoped(typeof(IEFRepository<,>), typeof(EfRepository<,>));
+        services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // ---- Dapper: lado de leitura (queries otimizadas, sem tracking) ----
@@ -64,8 +64,8 @@ public class InfrastructureModuleInitializer : IModuleInitializer
             _ => new SqlConnectionFactory(connectionString));
 
         services.AddScoped<IDemoEmployeeReadRepository, DemoEmployeeReadRepository>();
-        services.AddScoped<IDemoEmployeeWriterRepository, DemoEmployeeWriterRepository>();
+        services.AddScoped<IDemoEmployeeRepository, DemoEmployeeRepository>();
         services.AddScoped<IDemoOfficeReadRepository, DemoOfficeReadRepository>();
-        services.AddScoped<IDemoOfficeWriterRepository, DemoOfficeWriterRepository>();
+        services.AddScoped<IDemoOfficeRepository, DemoOfficeRepository>();
     }
 }

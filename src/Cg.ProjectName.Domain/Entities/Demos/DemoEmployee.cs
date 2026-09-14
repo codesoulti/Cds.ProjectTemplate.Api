@@ -1,5 +1,6 @@
 ﻿using Cg.ProjectName.Domain.Entities.Shared;
 using Cg.ProjectName.Domain.Enums.Shared;
+using Cg.ProjectName.Domain.Interfaces.Shared;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Cg.ProjectName.Domain.Entities.Demos;
@@ -10,7 +11,9 @@ namespace Cg.ProjectName.Domain.Entities.Demos;
 // aplicado na base resolve para qualquer entidade soft-deletable, atual
 // ou futura, sem depender de lembrete manual.
 [Table("Employees", Schema = "Demo")]
-public class DemoEmployee : EntityAudititedAndSoftDeletable<Guid>
+public class DemoEmployee 
+    : EntityAudititedAndSoftDeletable<Guid>, 
+    IHasRowVersion
 {
     public required string Name { get; set; }
     
@@ -27,6 +30,8 @@ public class DemoEmployee : EntityAudititedAndSoftDeletable<Guid>
     public required Guid OfficeId { get; set; }
 
     public DemoOffice? Office { get; set; }
+
+    public byte[] RowVersion { get; set; } = [];
 
     public DemoEmployee()
     {

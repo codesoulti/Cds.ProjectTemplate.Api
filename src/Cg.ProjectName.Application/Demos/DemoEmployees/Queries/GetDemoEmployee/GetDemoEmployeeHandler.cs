@@ -20,7 +20,7 @@ public class GetDemoEmployeeHandler(
         // genérico: este último é de propósito uma consulta de tabela única e
         // não devolveria OfficeName — o mesmo motivo pelo qual GetListAsync
         // também usa SQL escrito à mão em vez do builder genérico.
-        var employee = await _repository.GetDetailByIdAsync(command.Id, cancellationToken)
+        var employee = await _repository.GetByIdAsync(command.Id, cancellationToken)
             ?? throw NotFoundException.For<DemoEmployee>(command.Id);
 
         return _mapper.Map<GetDemoEmployeeDto>(employee);

@@ -1,17 +1,20 @@
-﻿using Cg.ProjectName.Domain.Entities.Shared;
+﻿using Cg.ProjectName.Application.Shared.ReadModels.Paginations;
+using Cg.ProjectName.Domain.Entities.Shared;
 using Cg.ProjectName.Domain.Interfaces.Repositories;
 using Cg.ProjectName.Domain.Options.Dapper;
-using Cg.ProjectName.Domain.ValueObjects.Dapper;
+using Cg.ProjectName.Domain.ValueObjects.Paginations;
 using Cg.ProjectName.Infrastructure.Data.Contexts.Dapper;
+using Cg.ProjectName.Infrastructure.Data.Repositories.Base.Dapper;
 using Cg.ProjectName.Infrastructure.Data.Repositories.Base.Dapper.Queries;
 using Dapper;
+using System.Data;
 using System.Linq.Expressions;
 
-namespace Cg.ProjectName.Infrastructure.Data.Repositories.Base.Dapper;
+namespace Cg.ProjectName.Infrastructure.Data.Repositories.Base;
 
-public abstract class DapperRepository<TEntity, TKey>(
+public abstract class ReadRepository<TEntity, TKey>(
     IDbConnectionFactory connectionFactory)
-    : IDapperRepository<TEntity, TKey>
+    : IReadRepository<TEntity, TKey>
     where TEntity : Entity<TKey>
     where TKey : IEquatable<TKey>
 {
@@ -21,53 +24,15 @@ public abstract class DapperRepository<TEntity, TKey>(
     protected static DapperMapping<TEntity, TKey> Mapping =>
         DapperMapping<TEntity, TKey>.Instance;
 
-    public virtual async Task<TEntity?> GetByIdAsync(
-        TKey id,
+    public virtual async Task<IReadOnlyList<TEntity>> QueryAllAsync(
         CancellationToken cancellationToken = default)
     {
-        return await GetByIdAsync(
-            id,
+        return await QueryAllAsync(
             null,
             cancellationToken);
     }
 
-    public virtual async Task<TEntity?> GetByIdAsync(
-        TKey id,
-        Expression<Func<TEntity, object>>? columns,
-        CancellationToken cancellationToken = default)
-    {
-        // Usa BuildById (WHERE {Chave} = @Id direto) em vez de expressar o
-        // filtro como "entity.Id!.Equals(id)": como TKey é restrito a
-        // IEquatable<TKey>, o compilador resolve esse .Equals para
-        // IEquatable<TKey>.Equals(TKey) — um MethodCallExpression cujo
-        // DeclaringType não é string — e o WhereExpressionBuilder só sabe
-        // traduzir métodos de string, lançando NotSupportedException. Ou
-        // seja: GetByIdAsync (a operação mais básica do repositório) lançava
-        // exceção sempre que era chamado.
-        var query = DapperSqlBuilder.BuildById<TEntity, TKey>(
-            id,
-            columns);
-
-        var command = new CommandDefinition(
-            query.Sql,
-            query.Parameters,
-            cancellationToken: cancellationToken);
-
-        using var connection = ConnectionFactory.CreateConnection();
-
-        return await connection.QueryFirstOrDefaultAsync<TEntity>(
-            command);
-    }
-
-    public virtual async Task<IReadOnlyList<TEntity>> GetAllAsync(
-        CancellationToken cancellationToken = default)
-    {
-        return await GetAllAsync(
-            null,
-            cancellationToken);
-    }
-
-    public virtual async Task<IReadOnlyList<TEntity>> GetAllAsync(
+    public virtual async Task<IReadOnlyList<TEntity>> QueryAllAsync(
         Expression<Func<TEntity, object>>? columns,
         CancellationToken cancellationToken = default)
     {
@@ -91,7 +56,7 @@ public abstract class DapperRepository<TEntity, TKey>(
         return result.AsList();
     }
 
-    public virtual async Task<IReadOnlyList<TEntity>> QueryAsync(
+    public virtual async Task<IReadOnlyList<TEntity>> QueryListAsync(
         DapperQueryOptions<TEntity> options,
         CancellationToken cancellationToken = default)
     {
@@ -112,7 +77,7 @@ public abstract class DapperRepository<TEntity, TKey>(
         return result.AsList();
     }
 
-    public virtual async Task<DapperPaginatedListVO<TEntity>> QueryPagedAsync(
+    public virtual async Task<PaginatedListResult<T>> QueryListPagedAsync<T>(
         DapperQueryOptions<TEntity> options,
         CancellationToken cancellationToken = default)
     {
@@ -190,10 +155,10 @@ public abstract class DapperRepository<TEntity, TKey>(
             await multiple.ReadSingleAsync<int>();
 
         var items =
-            (await multiple.ReadAsync<TEntity>())
+            (await multiple.ReadAsync<T>())
             .AsList();
 
-        return new DapperPaginatedListVO<TEntity>
+        return new PaginatedListResult<T>
         {
             Items = items,
             TotalCount = totalCount,
@@ -202,10 +167,45 @@ public abstract class DapperRepository<TEntity, TKey>(
         };
     }
 
-    protected static string ResolveSortDirection(string? direction) =>
-        string.Equals(direction, "desc", StringComparison.OrdinalIgnoreCase)
-            ? "DESC"
-            : "ASC";
+    public virtual async Task<TEntity?> QueryByIdAsync(
+       TKey id,
+       CancellationToken cancellationToken = default)
+    {
+        return await QueryByIdAsync(
+            id,
+            null,
+            cancellationToken);
+    }
+
+    public virtual async Task<TEntity?> QueryByIdAsync(
+        TKey id,
+        Expression<Func<TEntity, object>>? columns,
+        CancellationToken cancellationToken = default)
+    {
+        // Usa BuildById (WHERE {Chave} = @Id direto) em vez de expressar o
+        // filtro como "entity.Id!.Equals(id)": como TKey é restrito a
+        // IEquatable<TKey>, o compilador resolve esse .Equals para
+        // IEquatable<TKey>.Equals(TKey) — um MethodCallExpression cujo
+        // DeclaringType não é string — e o WhereExpressionBuilder só sabe
+        // traduzir métodos de string, lançando NotSupportedException. Ou
+        // seja: GetByIdAsync (a operação mais básica do repositório) lançava
+        // exceção sempre que era chamado.
+        var query = DapperSqlBuilder.BuildById<TEntity, TKey>(
+            id,
+            columns);
+
+        var command = new CommandDefinition(
+            query.Sql,
+            query.Parameters,
+            cancellationToken: cancellationToken);
+
+        using var connection = ConnectionFactory.CreateConnection();
+
+        return await connection.QueryFirstOrDefaultAsync<TEntity>(
+            command);
+    }
+
+    #region HELPERS
 
     protected static void AddOptionalFilter<T>(
         List<string> conditions,
@@ -236,7 +236,12 @@ public abstract class DapperRepository<TEntity, TKey>(
         parameters.Add(parameterName, DapperSqlBuilder.EscapeLikeValue(value));
     }
 
-    protected async Task<DapperPaginatedListVO<T>> QueryPaginatedAsync<T>(
+    protected static string ResolveSortDirection(string? direction) =>
+        string.Equals(direction, "desc", StringComparison.OrdinalIgnoreCase)
+            ? "DESC"
+            : "ASC";
+
+    protected async Task<PaginatedListResult<T>> PaginatedQueryAsync<T>(
         string sql,
         DynamicParameters parameters,
         int currentPage,
@@ -267,7 +272,7 @@ public abstract class DapperRepository<TEntity, TKey>(
         var items =
             (await multiple.ReadAsync<T>()).AsList();
 
-        return new DapperPaginatedListVO<T>
+        return new PaginatedListResult<T>
         {
             Items = items,
             TotalCount = totalCount,
@@ -276,9 +281,104 @@ public abstract class DapperRepository<TEntity, TKey>(
         };
     }
 
+    protected async Task<T?> QueryFirstOrDefaultAsync<T>(
+        string sql,
+        DynamicParameters parameters,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new CommandDefinition(
+            sql,
+            parameters,
+            cancellationToken: cancellationToken);
+
+        using var connection = ConnectionFactory.CreateConnection();
+
+        return await connection.QueryFirstOrDefaultAsync<T>(
+            command);
+    }
+
+    protected async Task<int> ExecuteQueryAsync(
+        string procedureName,
+        DynamicParameters? parameters = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(procedureName);
+
+        var command = new CommandDefinition(
+            procedureName,
+            parameters,
+            commandType: CommandType.Text,
+            cancellationToken: cancellationToken);
+
+        using var connection = ConnectionFactory.CreateConnection();
+
+        return await connection.ExecuteAsync(command);
+    }
+
+    protected async Task<IReadOnlyList<T>> ExecuteQueryAsync<T>(
+       string procedureName,
+       DynamicParameters? parameters = null,
+       CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(procedureName);
+
+        var command = new CommandDefinition(
+            procedureName,
+            parameters,
+            commandType: CommandType.Text,
+            cancellationToken: cancellationToken);
+
+        using var connection = ConnectionFactory.CreateConnection();
+
+        var result = await connection.QueryAsync<T>(command);
+
+        return result.AsList();
+    }
+
+    protected async Task<int> ExecuteNoQueryAsync(
+        string procedureName,
+        DynamicParameters? parameters = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(procedureName);
+
+        var command = new CommandDefinition(
+            procedureName,
+            parameters,
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: cancellationToken);
+
+        using var connection = ConnectionFactory.CreateConnection();
+
+        return await connection.ExecuteAsync(command);
+    }
+
+    protected async Task<IReadOnlyList<T>> ExecuteNoQueryAsync<T>(
+        string procedureName,
+        DynamicParameters? parameters = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(procedureName);
+
+        var command = new CommandDefinition(
+            procedureName,
+            parameters,
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: cancellationToken);
+
+        using var connection = ConnectionFactory.CreateConnection();
+
+        var result = await connection.QueryAsync<T>(command);
+
+        return result.AsList();
+    }
+
     private static IEnumerable<string> GetParameterNames(
         DynamicParameters parameters)
     {
         return parameters.ParameterNames;
     }
+
+    #endregion
+
 }

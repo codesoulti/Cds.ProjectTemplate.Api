@@ -1,4 +1,4 @@
-namespace Cg.ProjectName.Domain.Interfaces.Repositories;
+namespace Cg.ProjectName.Domain.Interfaces.Shared;
 
 /// <summary>
 /// Marca uma entidade que possui um token de concorrência otimista

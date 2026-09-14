@@ -1,17 +1,18 @@
 ﻿using Cg.ProjectName.Infrastructure.Data.Contexts.EfCore;
 using Cg.ProjectName.Domain.Entities.Shared;
-using Cg.ProjectName.Domain.Interfaces.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Cg.ProjectName.Domain.Interfaces.Repositories.Base;
+using Cg.ProjectName.Domain.Interfaces.Shared;
 // IHasRowVersion vem de Cg.ProjectName.Domain.Interfaces.Repositories, já
 // coberto pelo using acima.
 
-namespace Cg.ProjectName.Infrastructure.Data.Repositories.Base.EfCore;
+namespace Cg.ProjectName.Infrastructure.Data.Repositories.Base;
 
 /// <summary>
-/// Implementação genérica de <see cref="IEFRepository{TEntity, TKey}"/> usando EF Core.
+/// Implementação genérica de <see cref="IRepository{TEntity, TKey}"/> usando EF Core.
 /// </summary>
-public class EfRepository<TEntity, TKey>(CgProjectNameDbContext context) : 
-    IEFRepository<TEntity, TKey>
+public class Repository<TEntity, TKey>(CgProjectNameDbContext context) : 
+    IRepository<TEntity, TKey>
     where TEntity : Entity<TKey>
     where TKey : IEquatable<TKey>
 {

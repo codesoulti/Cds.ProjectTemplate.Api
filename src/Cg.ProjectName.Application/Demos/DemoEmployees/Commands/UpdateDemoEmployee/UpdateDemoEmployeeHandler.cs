@@ -9,13 +9,13 @@ using MediatR;
 namespace Cg.ProjectName.Application.Demos.DemoEmployees.Commands.UpdateDemoEmployee;
 
 public class UpdateDemoEmployeeHandler(
-    IDemoEmployeeWriterRepository repository,
-    IDemoOfficeWriterRepository officeRepository,
+    IDemoEmployeeRepository repository,
+    IDemoOfficeRepository officeRepository,
     IMapper mapper)
         : IRequestHandler<UpdateDemoEmployeeCommand, UpdateDemoEmployeeDto>
 {
-    private readonly IDemoEmployeeWriterRepository _repository = repository;
-    private readonly IDemoOfficeWriterRepository _officeRepository = officeRepository;
+    private readonly IDemoEmployeeRepository _repository = repository;
+    private readonly IDemoOfficeRepository _officeRepository = officeRepository;
     private readonly IMapper _mapper = mapper;
 
     public async Task<UpdateDemoEmployeeDto> Handle(UpdateDemoEmployeeCommand command, CancellationToken cancellationToken)

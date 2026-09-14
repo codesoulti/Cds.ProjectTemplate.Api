@@ -7,13 +7,13 @@ using MediatR;
 namespace Cg.ProjectName.Application.Demos.DemoEmployees.Commands.CreateDemoEmployee;
 
 public class CreateDemoEmployeeHandler(
-    IDemoEmployeeWriterRepository demoEmployeeRepository,
-    IDemoOfficeWriterRepository demoOfficeRepository,
+    IDemoEmployeeRepository demoEmployeeRepository,
+    IDemoOfficeRepository demoOfficeRepository,
     IMapper mapper)
         : IRequestHandler<CreateDemoEmployeeCommand, CreateDemoEmployeeDto>
 {
-    private readonly IDemoEmployeeWriterRepository _repository = demoEmployeeRepository;
-    private readonly IDemoOfficeWriterRepository _officeRepository = demoOfficeRepository;
+    private readonly IDemoEmployeeRepository _repository = demoEmployeeRepository;
+    private readonly IDemoOfficeRepository _officeRepository = demoOfficeRepository;
     private readonly IMapper _mapper = mapper;
 
     public async Task<CreateDemoEmployeeDto> Handle(CreateDemoEmployeeCommand command, CancellationToken cancellationToken)

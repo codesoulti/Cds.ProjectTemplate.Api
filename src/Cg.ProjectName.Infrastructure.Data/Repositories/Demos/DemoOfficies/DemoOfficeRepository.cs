@@ -1,7 +1,7 @@
 ﻿using Cg.ProjectName.Domain.Entities.Demos;
 using Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoOfficies;
 using Cg.ProjectName.Infrastructure.Data.Contexts.EfCore;
-using Cg.ProjectName.Infrastructure.Data.Repositories.Base.EfCore;
+using Cg.ProjectName.Infrastructure.Data.Repositories.Base;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,9 +15,9 @@ namespace Cg.ProjectName.Infrastructure.Data.Repositories.Demos.DemoOfficies;
 /// Repositório de leitura (Dapper), usado para resolver/reconsultar um
 /// DemoOffice por nome em <see cref="GetOrCreateByNameAsync"/>.
 /// </param>
-public class DemoOfficeWriterRepository(CgProjectNameDbContext context, IDemoOfficeReadRepository readRepository) :
-    EfRepository<DemoOffice, Guid>(context),
-    IDemoOfficeWriterRepository
+public class DemoOfficeRepository(CgProjectNameDbContext context, IDemoOfficeReadRepository readRepository) :
+    Repository<DemoOffice, Guid>(context),
+    IDemoOfficeRepository
 {
     private readonly IDemoOfficeReadRepository _readRepository = readRepository;
 

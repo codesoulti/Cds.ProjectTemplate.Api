@@ -1,7 +1,6 @@
 using AutoMapper;
-using Cg.ProjectName.Domain.Entities.Demos;
-using Cg.ProjectName.Domain.ValueObjects.Dapper;
-using Cg.ProjectName.Application.Shared.Paginations.Dapper;
+using Cg.ProjectName.Domain.ValueObjects.Demos.DemoEmployees;
+using Cg.ProjectName.Domain.ValueObjects.Paginations;
 
 namespace Cg.ProjectName.Application.Demos.DemoEmployees.Queries.ListDemoEmployee;
 
@@ -9,7 +8,7 @@ public class ListDemoEmployeeProfile : Profile
 {
     public ListDemoEmployeeProfile()
     {
-        CreateMap<DemoEmployeeListItem, ListDemoEmployeeDto>();
-        CreateMap<DapperPaginatedListVO<DemoEmployeeListItem>, DapperPaginatedListDto<ListDemoEmployeeDto>>();
+        CreateMap<DemoEmployeeResult, ListDemoEmployeeDto>();
+        CreateMap<PaginatedListResult<DemoEmployeeResult>, PaginatedListResult<ListDemoEmployeeDto>>();
     }
 } 

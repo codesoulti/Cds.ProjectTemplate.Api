@@ -1,4 +1,4 @@
-﻿using Cg.ProjectName.Domain.Interfaces.Repositories;
+﻿using Cg.ProjectName.Domain.Interfaces.Shared;
 using Cg.ProjectName.Domain.Options.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;

@@ -1,12 +1,13 @@
 ﻿using Cg.ProjectName.Domain.Entities.Shared;
+using Cg.ProjectName.Domain.Interfaces.Shared;
 
-namespace Cg.ProjectName.Domain.Interfaces.Repositories;
+namespace Cg.ProjectName.Domain.Interfaces.Repositories.Base;
 
 /// <summary>
 /// Repositório genérico de escrita (comandos), implementado via EF Core.
 /// Responsável por rastrear mudanças e persistir agregados através do DbContext.
 /// </summary>
-public interface IEFRepository<TEntity, TKey>
+public interface IRepository<TEntity, TKey>
     where TEntity : Entity<TKey>
     where TKey : IEquatable<TKey>
 {

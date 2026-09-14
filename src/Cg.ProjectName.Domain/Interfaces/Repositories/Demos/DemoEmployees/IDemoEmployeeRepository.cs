@@ -1,4 +1,5 @@
 ﻿using Cg.ProjectName.Domain.Entities.Demos;
+using Cg.ProjectName.Domain.Interfaces.Repositories.Base;
 
 namespace Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoEmployees;
 
@@ -6,7 +7,7 @@ namespace Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoEmployees;
 /// Repositório de escrita (modificações), implementado via EF Core.
 /// Usado para operações de inserção, atualização e exclusão, sem tracking do EF Core.
 /// </summary>
-public interface IDemoEmployeeWriterRepository 
-    : IEFRepository<DemoEmployee, Guid>
+public interface IDemoEmployeeRepository 
+    : IRepository<DemoEmployee, Guid>
 {
 }

@@ -1,5 +1,6 @@
 ﻿using Cg.ProjectName.Domain.Entities.Shared;
 using Cg.ProjectName.Domain.Enums.Shared;
+using Cg.ProjectName.Domain.Interfaces.Shared;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Cg.ProjectName.Domain.Entities.Demos;
@@ -8,11 +9,13 @@ namespace Cg.ProjectName.Domain.Entities.Demos;
 // DemoOfficeConfiguration.ToTable) — antes o atributo dizia "Offices",
 // divergindo do nome de tabela usado por EF Core e Dapper ("DemoOffices").
 [Table("Offices", Schema = "Demo")]
-public class DemoOffice : EntityAudititedAndSoftDeletable<Guid>
+public class DemoOffice : EntityAudititedAndSoftDeletable<Guid>, IHasRowVersion
 {
     public required string Name { get; set; }
 
     public required EStatus Status { get; set; }
+
+    public byte[] RowVersion { get; set; } = [];
 
     public ICollection<DemoEmployee> Employees { get; set; } = [];
 

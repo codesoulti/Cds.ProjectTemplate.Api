@@ -1,7 +1,8 @@
 ﻿using Cg.ProjectName.Domain.Entities.Demos;
 using Cg.ProjectName.Domain.Enums.Shared;
 using Cg.ProjectName.Domain.Options.Dapper;
-using Cg.ProjectName.Domain.ValueObjects.Dapper;
+using Cg.ProjectName.Domain.ValueObjects.Demos.DemoEmployees;
+using Cg.ProjectName.Domain.ValueObjects.Paginations;
 
 namespace Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoEmployees;
 
@@ -10,15 +11,22 @@ namespace Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoEmployees;
 /// Usado para queries diretas/otimizadas, sem tracking do EF Core.
 /// </summary>
 public interface IDemoEmployeeReadRepository
-    : IDapperRepository<DemoEmployee, Guid>
+    : IReadRepository<DemoEmployee, Guid>
 {
-    Task<DapperPaginatedListVO<DemoEmployeeListItem>> GetListAsync(
+    public Task<PaginatedListResult<DemoEmployeeResult>> GetListPagedAsync(
         string? name,
         Guid? officeId,
         EStatus? status,
-        int CurrentPage,
-        int PageSize,
+        int currentPage,
+        int pageSize,
         SortingOptions? sorting,
+        CancellationToken cancellationToken = default
+    );
+
+    public Task<IReadOnlyList<DemoEmployee>> GetListAsync(
+        string? name,
+        Guid? officeId,
+        EStatus? status,
         CancellationToken cancellationToken = default
     );
 
@@ -29,7 +37,7 @@ public interface IDemoEmployeeReadRepository
     /// (herdado) não serve aqui: ele é de propósito uma consulta de uma
     /// tabela só e não devolveria <c>OfficeName</c>.
     /// </summary>
-    Task<DemoEmployeeListItem?> GetDetailByIdAsync(
+    Task<DemoEmployeeResult?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default);
 }

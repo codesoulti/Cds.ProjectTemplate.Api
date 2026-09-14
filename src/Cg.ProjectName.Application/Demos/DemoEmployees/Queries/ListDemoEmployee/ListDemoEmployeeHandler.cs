@@ -1,6 +1,6 @@
 using AutoMapper;
-using Cg.ProjectName.Application.Shared.Paginations.Dapper;
 using Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoEmployees;
+using Cg.ProjectName.Domain.ValueObjects.Paginations;
 using MediatR;
 
 namespace Cg.ProjectName.Application.Demos.DemoEmployees.Queries.ListDemoEmployee;
@@ -8,14 +8,14 @@ namespace Cg.ProjectName.Application.Demos.DemoEmployees.Queries.ListDemoEmploye
 public class ListDemoEmployeeHandler(
     IDemoEmployeeReadRepository demoEmployeeRepository,
     IMapper mapper)
-        : IRequestHandler<ListDemoEmployeeCommand, DapperPaginatedListDto<ListDemoEmployeeDto>>
+        : IRequestHandler<ListDemoEmployeeCommand, PaginatedListResult<ListDemoEmployeeDto>>
 {
     private readonly IDemoEmployeeReadRepository _repository = demoEmployeeRepository;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<DapperPaginatedListDto<ListDemoEmployeeDto>> Handle(ListDemoEmployeeCommand command, CancellationToken cancellationToken)
+    public async Task<PaginatedListResult<ListDemoEmployeeDto>> Handle(ListDemoEmployeeCommand command, CancellationToken cancellationToken)
     {
-        var query = await _repository.GetListAsync(
+        var query = await _repository.GetListPagedAsync(
             command.Name,
             command.OfficeId,
             command.Status,
@@ -24,7 +24,7 @@ public class ListDemoEmployeeHandler(
             command.Sorting,
             cancellationToken);
 
-        var employyes = _mapper.Map<DapperPaginatedListDto<ListDemoEmployeeDto>>(query);
+        var employyes = _mapper.Map<PaginatedListResult<ListDemoEmployeeDto>>(query);
 
         return employyes;
     }

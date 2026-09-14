@@ -1,6 +1,6 @@
 ﻿using Cg.ProjectName.Domain.Entities.Shared;
 using Cg.ProjectName.Domain.Options.Dapper;
-using Cg.ProjectName.Domain.ValueObjects.Dapper;
+using Cg.ProjectName.Domain.ValueObjects.Paginations;
 using System.Linq.Expressions;
 
 namespace Cg.ProjectName.Domain.Interfaces.Repositories;
@@ -9,15 +9,15 @@ namespace Cg.ProjectName.Domain.Interfaces.Repositories;
 /// Repositório genérico de leitura (consultas), implementado via Dapper.
 /// Usado para queries diretas/otimizadas, sem tracking do EF Core.
 /// </summary>
-public interface IDapperRepository<TEntity, TKey>
+public interface IReadRepository<TEntity, TKey>
     where TEntity : Entity<TKey>
     where TKey : IEquatable<TKey>
 {
-    Task<TEntity?> GetByIdAsync(
+    Task<TEntity?> QueryByIdAsync(
             TKey id,
             CancellationToken cancellationToken = default);
 
-    Task<TEntity?> GetByIdAsync(
+    Task<TEntity?> QueryByIdAsync(
         TKey id,
         Expression<Func<TEntity, object>>? columns,
         CancellationToken cancellationToken = default);
@@ -30,18 +30,18 @@ public interface IDapperRepository<TEntity, TKey>
     /// de schema (uma coluna nova/mais pesada passa a ser trazida sem
     /// ninguém pedir).
     /// </summary>
-    Task<IReadOnlyList<TEntity>> GetAllAsync(
+    Task<IReadOnlyList<TEntity>> QueryAllAsync(
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<TEntity>> GetAllAsync(
+    Task<IReadOnlyList<TEntity>> QueryAllAsync(
         Expression<Func<TEntity, object>>? columns,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<TEntity>> QueryAsync(
+    Task<IReadOnlyList<TEntity>> QueryListAsync(
         DapperQueryOptions<TEntity> options,
         CancellationToken cancellationToken = default);
 
-    Task<DapperPaginatedListVO<TEntity>> QueryPagedAsync(
+    Task<PaginatedListResult<T>> QueryListPagedAsync<T>(
         DapperQueryOptions<TEntity> options,
         CancellationToken cancellationToken = default);
 }

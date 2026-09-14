@@ -47,6 +47,9 @@ public sealed class DemoEmployeeConfiguration
         builder.Property(x => x.OfficeId)
             .IsRequired();
 
+        builder.Property(x => x.RowVersion)
+            .IsRowVersion();
+
         builder.HasOne(x => x.Office)
             .WithMany(x => x.Employees)
             .HasForeignKey(x => x.OfficeId)

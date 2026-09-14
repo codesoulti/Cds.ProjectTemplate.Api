@@ -2,7 +2,7 @@
 
 namespace Cg.ProjectName.Infrastructure.Data.Extensions.Dapper;
 
-public static class SoftDeleteExtensions
+public static class DapperSoftDeleteExtensions
 {
     public static bool IsSoftDeletable<T>()
     {

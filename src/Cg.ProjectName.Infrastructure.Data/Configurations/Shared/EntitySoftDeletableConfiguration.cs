@@ -75,13 +75,13 @@ public abstract class EntityAudititedAndSoftDeletableConfiguration<TEntity, TKey
         builder.Property(x => x.UpdatedAt)
             .HasColumnName("UpdatedAt");
 
-        // Token de concorrência otimista: coluna SQL Server "rowversion",
-        // gerada e incrementada pelo próprio banco a cada INSERT/UPDATE.
-        // Aplicado aqui (na base) em vez de em cada configuração de entidade
-        // individual, para cobrir DemoEmployee/DemoOffice e qualquer futura
-        // entidade audited+soft-deletable automaticamente.
-        builder.Property(x => x.RowVersion)
-            .IsRowVersion();
+        //// Token de concorrência otimista: coluna SQL Server "rowversion",
+        //// gerada e incrementada pelo próprio banco a cada INSERT/UPDATE.
+        //// Aplicado aqui (na base) em vez de em cada configuração de entidade
+        //// individual, para cobrir DemoEmployee/DemoOffice e qualquer futura
+        //// entidade audited+soft-deletable automaticamente.
+        //builder.Property(x => x.RowVersion)
+        //    .IsRowVersion();
 
         base.Configure(builder);
     }

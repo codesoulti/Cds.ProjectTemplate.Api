@@ -1,6 +1,7 @@
 ﻿using Cg.ProjectName.Domain.Entities.Shared;
 using Cg.ProjectName.Domain.Enums.Dapper;
 using Cg.ProjectName.Domain.Options.Dapper;
+using Cg.ProjectName.Infrastructure.Data.Repositories.Base.Dapper.Sqls;
 using Dapper;
 using System.Linq.Expressions;
 using System.Reflection;

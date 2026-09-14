@@ -1,8 +1,8 @@
-﻿namespace Cg.ProjectName.Application.Shared.Paginations.Dapper;
+﻿namespace Cg.ProjectName.Domain.ValueObjects.Paginations;
 
-public sealed class DapperPaginatedListDto<T>
+public sealed class PaginatedListResult<TEntity>
 {
-    public IReadOnlyList<T> Items { get; init; } = [];
+    public IReadOnlyList<TEntity> Items { get; init; } = [];
 
     public int TotalCount { get; init; }
 
@@ -12,8 +12,7 @@ public sealed class DapperPaginatedListDto<T>
 
     public int TotalPages => PageSize <= 0
             ? 0
-            : (int)Math.Ceiling(
-                (double)TotalCount / PageSize);
+            : (int)Math.Ceiling((double)TotalCount / PageSize);
 
     public bool HasPreviousPage => CurrentPage > 1;
 

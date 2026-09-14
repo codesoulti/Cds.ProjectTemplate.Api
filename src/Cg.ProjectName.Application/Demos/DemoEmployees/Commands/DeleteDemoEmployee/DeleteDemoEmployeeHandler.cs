@@ -6,10 +6,10 @@ using MediatR;
 namespace Cg.ProjectName.Application.Demos.DemoEmployees.Commands.DeleteDemoEmployee;
 
 public class DeleteDemoEmployeeHandler(
-    IDemoEmployeeWriterRepository repository)
+    IDemoEmployeeRepository repository)
         : IRequestHandler<DeleteDemoEmployeeCommand, DeleteDemoEmployeeDto>
 {
-    private readonly IDemoEmployeeWriterRepository _repository = repository;
+    private readonly IDemoEmployeeRepository _repository = repository;
 
     public async Task<DeleteDemoEmployeeDto> Handle(DeleteDemoEmployeeCommand request, CancellationToken cancellationToken)
     {
