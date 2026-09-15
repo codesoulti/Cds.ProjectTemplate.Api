@@ -40,7 +40,9 @@ public static class HangfireConfiguration
     /// recorrentes da aplicação. Nenhum job de exemplo é registrado por
     /// padrão — adicione os seus através de <c>IRecurringJobManager</c> aqui.
     /// </summary>
-    public static void UseHangfireJobs(this IApplicationBuilder app, IConfiguration configuration)
+    public static void UseHangfireJobs(
+        this IApplicationBuilder app, 
+        IConfiguration configuration)
     {
         var enabled = configuration.GetValue("Hangfire:Enabled", defaultValue: true);
 
@@ -57,11 +59,5 @@ public static class HangfireConfiguration
         {
             Authorization = [new LocalRequestsOnlyAuthorizationFilter()]
         });
-
-        // Exemplo de registro de job recorrente:
-        //
-        // using var scope = app.ApplicationServices.CreateScope();
-        // var recurringJobs = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
-        // recurringJobs.AddOrUpdate<MeuJob>("meu-job-id", job => job.Execute(), Cron.Daily);
     }
 }

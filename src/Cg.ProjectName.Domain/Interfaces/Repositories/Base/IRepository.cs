@@ -11,6 +11,11 @@ public interface IRepository<TEntity, TKey>
     where TEntity : Entity<TKey>
     where TKey : IEquatable<TKey>
 {
+
+    public IQueryable<TEntity> Query();
+
+    public IQueryable<TEntity> QueryNoTracking();
+
     Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
 
     // Assinatura sem '?': AddAsync/Update sempre retornam a entidade recebida

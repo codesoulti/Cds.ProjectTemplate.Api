@@ -28,7 +28,7 @@ public class InfrastructureModuleInitializer : IModuleInitializer
                 "Connection string 'DefaultConnection' não configurada em appsettings.json.");
 
         services
-            .AddHangfireConfiguration(builder.Configuration)
+            //.AddHangfireConfiguration(builder.Configuration)
             .AddRedisConfiguration(builder.Configuration);
 
         // ---- EF Core: lado de escrita (comandos / agregados / Unit of Work) ----

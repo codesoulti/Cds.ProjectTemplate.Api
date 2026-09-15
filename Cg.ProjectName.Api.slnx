@@ -18,6 +18,9 @@
     <Project Path="src/Cg.ProjectName.Infrastructure.CrossCutting.Security/Cg.ProjectName.Infrastructure.CrossCutting.Security.csproj" />
     <Project Path="src/Cg.ProjectName.Infrastructure.CrossCutting.Shared/Cg.ProjectName.Infrastructure.CrossCutting.Shared.csproj" Id="cf9accbf-55e2-48c1-97d3-5a3be445fc2d" />
   </Folder>
+  <Folder Name="/src/5-Worker/">
+    <Project Path="src/Cg.ProjectName.Worker/Cg.ProjectName.Worker.csproj" Id="d3e30ae8-cae3-4981-bd99-013274837669" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Cg.ProjectName.Test/Cg.ProjectName.Test.csproj" Id="0a9b8353-b713-48a2-9f10-7a6dfe68fb73" />
   </Folder>

@@ -19,6 +19,13 @@ public class Repository<TEntity, TKey>(CgProjectNameDbContext context) :
     protected readonly CgProjectNameDbContext Context = context;
     protected readonly DbSet<TEntity> DbSet = context.Set<TEntity>();
 
+    public IQueryable<TEntity> Query()
+      => DbSet.AsQueryable();
+
+    public IQueryable<TEntity> QueryNoTracking()
+      => DbSet.AsQueryable()
+        .AsNoTracking();
+
     public async Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
         => await DbSet.FindAsync([id], cancellationToken);
 

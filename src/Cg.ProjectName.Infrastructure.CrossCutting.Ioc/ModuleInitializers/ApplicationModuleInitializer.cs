@@ -1,4 +1,5 @@
 ﻿using Cg.ProjectName.Application;
+using Cg.ProjectName.Application.Demos.DemoEmployees.Jobs;
 using Cg.ProjectName.Infrastructure.CrossCutting.Ioc.Configurations;
 using Cg.ProjectName.Infrastructure.CrossCutting.Shared.Redis;
 using Cg.ProjectName.Infrastructure.CrossCutting.Shared.UnitOfWork;
@@ -43,6 +44,14 @@ public class ApplicationModuleInitializer : IModuleInitializer
             typeof(IPipelineBehavior<,>),
             typeof(UnitOfWorkBehavior<,>));
 
+        #endregion
+
+        #region JOBS
+        
+        services.AddScoped<
+            IDemoEmployeeMaintenanceJob, 
+            DemoEmployeeMaintenanceJob>();
+        
         #endregion
     }
 }

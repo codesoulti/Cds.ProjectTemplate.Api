@@ -29,6 +29,7 @@ builder.AddDefaultLogging();
 DependencyResolver.RegisterDependecies(builder);
 
 builder.Services.AddCorsConfiguration(builder.Configuration, builder.Environment)
+                .AddHangfireConfiguration(builder.Configuration)
                 .AddSwaggerConfiguration()
                 .AddSignalRConfiguration()
                 .AddRateLimitingConfiguration();
