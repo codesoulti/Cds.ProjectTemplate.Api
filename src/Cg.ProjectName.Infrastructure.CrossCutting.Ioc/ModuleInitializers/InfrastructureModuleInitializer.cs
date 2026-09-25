@@ -3,6 +3,7 @@ using Cg.ProjectName.Domain.Interfaces.Repositories.Base;
 using Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoEmployees;
 using Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoOfficies;
 using Cg.ProjectName.Infrastructure.CrossCutting.Ioc.Configurations;
+using Cg.ProjectName.Infrastructure.CrossCutting.Messaging.Configurations;
 using Cg.ProjectName.Infrastructure.Data.Contexts.Dapper;
 using Cg.ProjectName.Infrastructure.Data.Contexts.EfCore;
 using Cg.ProjectName.Infrastructure.Data.Interceptors;
@@ -29,7 +30,13 @@ public class InfrastructureModuleInitializer : IModuleInitializer
 
         services
             //.AddHangfireConfiguration(builder.Configuration)
-            .AddRedisConfiguration(builder.Configuration);
+            .AddRedisConfiguration(builder.Configuration)
+            // WebApi só PUBLICA eventos de integração (não consome nada) —
+            // por isso nenhum "configureConsumers" é passado aqui. O Worker
+            // registra o mesmo barramento com seus consumers em Program.cs,
+            // já que ele usa um Generic Host puro e não passa por este
+            // ModuleInitializer (ver comentário em RabbitMqConfiguration).
+            .AddRabbitMqConfiguration(builder.Configuration);
 
         // ---- EF Core: lado de escrita (comandos / agregados / Unit of Work) ----
         services.AddScoped<SoftDeleteInterceptor>();

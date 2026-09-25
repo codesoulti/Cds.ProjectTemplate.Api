@@ -2,21 +2,22 @@
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Cg.ProjectName.Infrastructure.CrossCutting.Ioc</RootNamespace>
-    <ImplicitUsings>enable</ImplicitUsings>
+		<RootNamespace>Cg.ProjectName.Infrastructure.CrossCutting.Ioc</RootNamespace>
+		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.11" />
-    <PackageReference Include="Hangfire" Version="1.8.25" />
-    <PackageReference Include="Hangfire.NetCore" Version="1.8.25" />
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.11" />
+		<PackageReference Include="Hangfire" Version="1.8.25" />
+		<PackageReference Include="Hangfire.NetCore" Version="1.8.25" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Cg.ProjectName.Application\Cg.ProjectName.Application.csproj" />
+		<ProjectReference Include="..\Cg.ProjectName.Infrastructure.CrossCutting.Messaging\Cg.ProjectName.Infrastructure.CrossCutting.Messaging.csproj" />
 		<ProjectReference Include="..\Cg.ProjectName.Infrastructure.CrossCutting.Shared\Cg.ProjectName.Infrastructure.CrossCutting.Shared.csproj" />
 		<ProjectReference Include="..\Cg.ProjectName.Infrastructure.Data\Cg.ProjectName.Infrastructure.Data.csproj" />
 	</ItemGroup>

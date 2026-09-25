@@ -20,6 +20,11 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <!-- ITestHarness (MassTransit.Testing) para
+         DemoEmployeeCreatedIntegrationEventConsumerTests — já viria
+         transitivamente via Worker/Ioc, mas referenciado explicitamente por
+         ser usado diretamente aqui (mesma convenção do resto da solução). -->
+    <PackageReference Include="MassTransit" Version="8.3.4" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,11 +36,15 @@
          banco de dados, apenas do assembly onde esse código vive.
          Cg.ProjectName.WebApi é referenciado para exercitar
          ValidationExceptionMiddleware diretamente — o único lugar que decide
-         400/401/404/409/500 para toda a API e que não tinha nenhum teste. -->
+         400/401/404/409/500 para toda a API e que não tinha nenhum teste.
+         Cg.ProjectName.Worker é referenciado para exercitar
+         DemoEmployeeCreatedIntegrationEventConsumer (exemplo de mensageria)
+         com o ITestHarness em memória do MassTransit. -->
     <ProjectReference Include="..\..\src\Cg.ProjectName.Domain\Cg.ProjectName.Domain.csproj" />
     <ProjectReference Include="..\..\src\Cg.ProjectName.Application\Cg.ProjectName.Application.csproj" />
     <ProjectReference Include="..\..\src\Cg.ProjectName.Infrastructure.Data\Cg.ProjectName.Infrastructure.Data.csproj" />
     <ProjectReference Include="..\..\src\Cg.ProjectName.WebApi\Cg.ProjectName.WebApi.csproj" />
+    <ProjectReference Include="..\..\src\Cg.ProjectName.Worker\Cg.ProjectName.Worker.csproj" />
   </ItemGroup>
 
   <ItemGroup>

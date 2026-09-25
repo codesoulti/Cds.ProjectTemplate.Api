@@ -1,0 +1,32 @@
+# Sobe um RabbitMQ local para desenvolvimento/testes do exemplo de
+# mensageria (ver IIntegrationEventPublisher, RabbitMqConfiguration e
+# DemoEmployeeCreatedIntegrationEventConsumer). Não inclui WebApi/Worker
+# nem SQL Server/Redis de propósito — este compose cobre só a peça que
+# faltava (broker) para rodar `dotnet run` localmente em cada projeto;
+# combine com sua própria instância de SQL Server/Redis, como já era o caso
+# antes deste exemplo existir (ver README > Como executar > Pré-requisitos).
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: cg-projectname-rabbitmq
+    ports:
+      # 5672  -> protocolo AMQP (usado pela aplicação/MassTransit)
+      # 15672 -> management UI (http://localhost:15672, guest/guest)
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    volumes:
+      # Persiste filas/mensagens entre reinícios do container — remova (ou
+      # rode `docker compose down -v`) se preferir um broker sempre "limpo".
+      - cg-projectname-rabbitmq-data:/var/lib/rabbitmq
+
+volumes:
+  cg-projectname-rabbitmq-data:

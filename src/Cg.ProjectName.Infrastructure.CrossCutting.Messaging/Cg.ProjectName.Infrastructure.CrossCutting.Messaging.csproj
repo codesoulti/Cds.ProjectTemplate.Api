@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Cg.ProjectName.Infrastructure.CrossCutting.Messaging</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <!-- Confirme em https://www.nuget.org/packages/MassTransit se esta é
+         realmente a versão mais recente antes do primeiro restore real: o
+         ambiente usado para criar este projeto não teve acesso ao NuGet.org
+         para validar isso, e o número abaixo pode já estar desatualizado. -->
+    <PackageReference Include="MassTransit" Version="8.3.4" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cg.ProjectName.Application\Cg.ProjectName.Application.csproj" />
+  </ItemGroup>
+
+</Project>

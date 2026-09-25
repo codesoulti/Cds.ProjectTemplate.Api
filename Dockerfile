@@ -16,6 +16,7 @@ COPY src/Cg.ProjectName.Domain/Cg.ProjectName.Domain.csproj src/Cg.ProjectName.D
 COPY src/Cg.ProjectName.Application/Cg.ProjectName.Application.csproj src/Cg.ProjectName.Application/
 COPY src/Cg.ProjectName.Infrastructure.Data/Cg.ProjectName.Infrastructure.Data.csproj src/Cg.ProjectName.Infrastructure.Data/
 COPY src/Cg.ProjectName.Infrastructure.CrossCutting.Ioc/Cg.ProjectName.Infrastructure.CrossCutting.Ioc.csproj src/Cg.ProjectName.Infrastructure.CrossCutting.Ioc/
+COPY src/Cg.ProjectName.Infrastructure.CrossCutting.Messaging/Cg.ProjectName.Infrastructure.CrossCutting.Messaging.csproj src/Cg.ProjectName.Infrastructure.CrossCutting.Messaging/
 COPY src/Cg.ProjectName.Infrastructure.CrossCutting.Security/Cg.ProjectName.Infrastructure.CrossCutting.Security.csproj src/Cg.ProjectName.Infrastructure.CrossCutting.Security/
 COPY src/Cg.ProjectName.Infrastructure.CrossCutting.Shared/Cg.ProjectName.Infrastructure.CrossCutting.Shared.csproj src/Cg.ProjectName.Infrastructure.CrossCutting.Shared/
 COPY src/Cg.ProjectName.Service/Cg.ProjectName.Service.csproj src/Cg.ProjectName.Service/

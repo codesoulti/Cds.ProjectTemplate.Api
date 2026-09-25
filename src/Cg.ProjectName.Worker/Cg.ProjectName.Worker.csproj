@@ -15,6 +15,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cg.ProjectName.Infrastructure.CrossCutting.Ioc\Cg.ProjectName.Infrastructure.CrossCutting.Ioc.csproj" />
+    <!-- Referenciado diretamente (não só transitivamente via Ioc) porque
+         DemoEmployeeCreatedIntegrationEventConsumer usa IConsumer<T> do
+         MassTransit, e Program.cs usa AddConsumer<T>/IBusRegistrationConfigurator
+         — mesma convenção do resto da solução: referencie explicitamente o
+         que seu próprio código usa diretamente. Traz o pacote MassTransit
+         (mas não MassTransit.RabbitMQ, que é exclusivo de quem configura o
+         transporte) transitivamente. -->
+    <ProjectReference Include="..\Cg.ProjectName.Infrastructure.CrossCutting.Messaging\Cg.ProjectName.Infrastructure.CrossCutting.Messaging.csproj" />
   </ItemGroup>
 
 </Project>

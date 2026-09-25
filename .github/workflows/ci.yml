@@ -15,6 +15,24 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    # RabbitMQ disponível para o job de teste — os testes atuais do exemplo
+    # de mensageria usam o ITestHarness em memória do MassTransit (não
+    # precisam de um broker real, ver
+    # DemoEmployeeCreatedIntegrationEventConsumerTests), mas este service
+    # container deixa pronto para testes de integração reais contra um
+    # RabbitMQ de verdade, sem precisar tocar o workflow de novo.
+    services:
+      rabbitmq:
+        image: rabbitmq:3-management-alpine
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q check_running"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
