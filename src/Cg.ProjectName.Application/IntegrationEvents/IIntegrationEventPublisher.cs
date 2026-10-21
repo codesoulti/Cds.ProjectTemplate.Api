@@ -5,37 +5,40 @@ namespace Cg.ProjectName.Application.IntegrationEvents;
 /// referencia MassTransit/RabbitMQ diretamente (regra de dependência da
 /// Clean Architecture: camadas internas não conhecem detalhes de
 /// infraestrutura), apenas esta interface. A implementação concreta (ver
-/// <c>IntegrationEventPublisher</c> em Infrastructure.CrossCutting.Ioc)
+/// <c>IntegrationEventPublisher</c> em Infrastructure.CrossCutting.Messaging)
 /// publica de fato no barramento configurado.
 ///
-/// Segue um padrão "outbox em memória, por requisição": <see cref="Enqueue"/>
-/// apenas acumula o evento no escopo da requisição atual (não publica nada
-/// ainda), e <see cref="DispatchAsync"/> é quem efetivamente publica —
-/// chamado por <c>UnitOfWorkBehavior</c> somente DEPOIS que a transação foi
-/// commitada com sucesso. Isso evita o cenário clássico de publicar um
-/// evento "Xyz foi criado" e, em seguida, a escrita no banco falhar (ex.:
-/// erro transiente esgotando as tentativas do EnableRetryOnFailure,
-/// violação de constraint) — o consumidor já teria reagido a algo que nunca
-/// existiu.
+/// Antes desta interface tinha Enqueue/DispatchAsync (um "outbox em
+/// memória, por requisição" caseiro): acumulava o evento e só publicava
+/// depois que UnitOfWorkBehavior confirmasse o commit da transação — mas
+/// não sobrevivia a um crash do processo entre o commit e o dispatch (ver
+/// git history / README para o desenho anterior).
 ///
-/// Não é um Outbox Pattern completo (não persiste os eventos pendentes em
-/// tabela própria) — se o processo cair exatamente entre o commit da
-/// transação e o Dispatch, o evento se perde. Para garantias mais fortes
-/// (at-least-once mesmo em caso de crash do processo), evolua para um outbox
-/// real (tabela + processo separado publicando as linhas pendentes).
+/// Agora <see cref="PublishAsync{TEvent}"/> é chamado diretamente do
+/// Handler (não mais "só enfileira") e delega, por baixo, para
+/// <c>IPublishEndpoint.Publish</c> do MassTransit — mas isso continua sendo
+/// seguro para publicar ANTES do commit porque a implementação real roda
+/// atrás do Outbox Transacional do MassTransit (<c>AddEntityFrameworkOutbox</c>
+/// + <c>UseBusOutbox</c>, ver <c>RabbitMqConfiguration</c>): a chamada a
+/// Publish só acumula a mensagem no escopo atual; ela só é de fato gravada
+/// (na tabela OutboxMessage, na MESMA transação) quando
+/// <c>UnitOfWorkBehavior</c> chama <c>SaveChangesAsync</c> logo em seguida —
+/// e só é entregue ao RabbitMQ depois que a transação commitar, por um
+/// serviço de entrega em background que o próprio MassTransit registra. Ou
+/// seja: o Handler continua podendo chamar isso sem try/catch, e uma falha
+/// na escrita continua não resultando em mensagem publicada — a garantia
+/// não vem mais de "só chame isso depois do commit", vem do outbox em si.
+///
+/// Mantida como abstração (em vez de o Handler injetar IPublishEndpoint
+/// direto) para preservar a regra de dependência: Application continua sem
+/// referenciar o pacote MassTransit.
 /// </summary>
 public interface IIntegrationEventPublisher
 {
     /// <summary>
-    /// Acumula <paramref name="integrationEvent"/> para publicação posterior
-    /// via <see cref="DispatchAsync"/>. Não publica nada imediatamente.
+    /// Publica <paramref name="integrationEvent"/>. Seguro para chamar antes
+    /// do commit da transação atual — ver comentário da interface.
     /// </summary>
-    void Enqueue<TEvent>(TEvent integrationEvent) where TEvent : class;
-
-    /// <summary>
-    /// Publica todos os eventos acumulados desde a última chamada (em
-    /// ordem) e limpa a fila. Chamado por <c>UnitOfWorkBehavior</c> logo
-    /// após o commit da transação — nunca chame diretamente de um Handler.
-    /// </summary>
-    Task DispatchAsync(CancellationToken cancellationToken = default);
+    Task PublishAsync<TEvent>(TEvent integrationEvent, CancellationToken cancellationToken = default)
+        where TEvent : class;
 }

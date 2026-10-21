@@ -6,18 +6,17 @@ using Cg.ProjectName.Infrastructure.CrossCutting.Shared.UnitOfWork;
 using Cg.ProjectName.Infrastructure.CrossCutting.Shared.Validation;
 using FluentValidation;
 using MediatR;
-using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cg.ProjectName.Infrastructure.CrossCutting.Ioc.ModuleInitializers;
 
 public class ApplicationModuleInitializer : IModuleInitializer
 {
-    public void Initialize(WebApplicationBuilder builder)
+    public void Initialize(IServiceCollection services, IConfiguration configuration)
     {
         // Reservado para registros da camada de Application
         // (ex: MediatR, AutoMapper/Mapster, validators do FluentValidation, etc.)
-        var services = builder.Services;
 
         // FluentValidation
         services.AddValidatorsFromAssemblyContaining<IApplicationLayer>();

@@ -1,0 +1,52 @@
+name: CI
+
+# Antes não existia nenhum workflow de CI no repositório — todo o feedback
+# de build/teste dependia de rodar localmente. Este workflow roda em toda
+# alteração de código nas branches principais e em Pull Requests, e é o
+# mínimo esperado num repositório de portfólio: build limpo + testes
+# automatizados a cada mudança.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # RabbitMQ disponível para o job de teste — os testes atuais do exemplo
+    # de mensageria usam o ITestHarness em memória do MassTransit (não
+    # precisam de um broker real, ver
+    # DemoEmployeeCreatedIntegrationEventConsumerTests), mas este service
+    # container deixa pronto para testes de integração reais contra um
+    # RabbitMQ de verdade, sem precisar tocar o workflow de novo.
+    services:
+      rabbitmq:
+        image: rabbitmq:3-management-alpine
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q check_running"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore Cg.ProjectName.slnx
+
+      - name: Build
+        run: dotnet build Cg.ProjectName.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test Cg.ProjectName.slnx --no-build --configuration Release --verbosity normal

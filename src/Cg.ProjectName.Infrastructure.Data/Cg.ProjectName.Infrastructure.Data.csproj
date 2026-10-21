@@ -18,6 +18,14 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
 
+    <!-- Outbox Transacional do MassTransit — CgProjectNameDbContext.OnModelCreating
+         chama AddInboxStateEntity()/AddOutboxMessageEntity()/AddOutboxStateEntity(),
+         extensões deste pacote (não traz RabbitMQ nem qualquer transporte:
+         só os modelos de tabela do outbox, mesma versão do MassTransit
+         usado em Infrastructure.CrossCutting.Messaging — confira no
+         NuGet.org antes do primeiro restore real). -->
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.3.4" />
+
     <!-- Dapper - lado de leitura (queries otimizadas, sem tracking) -->
     <PackageReference Include="Dapper" Version="2.1.79" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />

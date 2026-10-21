@@ -1,16 +1,16 @@
 ﻿using Cg.ProjectName.Infrastructure.CrossCutting.Ioc.Configurations;
 using Cg.ProjectName.Infrastructure.CrossCutting.Ioc.HealthChecks;
-using Microsoft.AspNetCore.Builder;
+using Cg.ProjectName.Infrastructure.CrossCutting.Messaging.Configurations;
+using Cg.ProjectName.Infrastructure.Data.Contexts.EfCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cg.ProjectName.Infrastructure.CrossCutting.Ioc.ModuleInitializers;
 
 public class WebApiModuleInitializer : IModuleInitializer
 {
-    public void Initialize(WebApplicationBuilder builder)
+    public void Initialize(IServiceCollection services, IConfiguration configuration)
     {
-        var services = builder.Services;
-
         services.AddControllers();
 
         // Checks reais (antes era AddHealthChecks() sem nenhum check
@@ -25,9 +25,25 @@ public class WebApiModuleInitializer : IModuleInitializer
             .AddHealthChecks()
             .AddCheck<SqlServerHealthCheck>("sql-server", tags: ["ready"]);
 
-        if (RedisConfiguration.IsEnabled(builder.Configuration))
+        if (RedisConfiguration.IsEnabled(configuration))
         {
             healthChecks.AddCheck<RedisHealthCheck>("redis", tags: ["ready"]);
         }
+
+        // Mensageria — só a WebApi chama daqui (via
+        // DependencyResolver.RegisterDependecies), com o papel de PUBLISHER
+        // apenas (nenhum "configureConsumers"). Antes esta chamada vivia em
+        // InfrastructureModuleInitializer; movida pra cá porque esse método
+        // passou a ser compartilhado com o Worker (RegisterWorkerDependencies),
+        // que precisa configurar o mesmo bus com seus próprios consumers —
+        // mantendo a chamada em InfrastructureModuleInitializer registraria o
+        // MassTransit duas vezes quando o Worker também chamasse a sua própria
+        // AddRabbitMqConfiguration em Program.cs.
+        //
+        // useOutbox: true só aqui — só a WebApi publica (ver
+        // IIntegrationEventPublisher), então só ela precisa do Outbox
+        // Transacional (AddEntityFrameworkOutbox/UseBusOutbox). O Worker
+        // (consumer) chama a mesma extensão sem esse parâmetro.
+        services.AddRabbitMqConfiguration<CgProjectNameDbContext>(configuration, useOutbox: true);
     }
 }

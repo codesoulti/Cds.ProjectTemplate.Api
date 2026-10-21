@@ -38,18 +38,21 @@ public class CreateDemoEmployeeHandler(
         // após este handler retornar — não há necessidade de try/catch aqui.
         var createdEmployee = await _repository.AddAsync(employee, cancellationToken);
 
-        // Só ENFILEIRA — a publicação real no RabbitMQ só acontece depois
-        // que UnitOfWorkBehavior commitar a transação com sucesso (ver
-        // comentário em IIntegrationEventPublisher). Se o SaveChanges/commit
-        // falhar, este evento nunca chega a ser publicado.
-        _integrationEventPublisher.Enqueue(new DemoEmployeeCreatedIntegrationEvent(
-            createdEmployee.Id,
-            createdEmployee.Name,
-            createdEmployee.Document,
-            createdEmployee.DateHire,
-            createdEmployee.Salary,
-            createdEmployee.OfficeId,
-            DateTime.UtcNow));
+        // Seguro chamar aqui, antes do commit (feito logo depois, em
+        // UnitOfWorkBehavior): o Outbox Transacional do MassTransit garante
+        // que isso só vira uma linha durável na mesma transação do
+        // SaveChanges, e só é de fato entregue ao RabbitMQ depois que a
+        // transação commitar — ver comentário em IIntegrationEventPublisher.
+        await _integrationEventPublisher.PublishAsync(
+            new DemoEmployeeCreatedIntegrationEvent(
+                createdEmployee.Id,
+                createdEmployee.Name,
+                createdEmployee.Document,
+                createdEmployee.DateHire,
+                createdEmployee.Salary,
+                createdEmployee.OfficeId,
+                DateTime.UtcNow),
+            cancellationToken);
 
         return _mapper.Map<CreateDemoEmployeeDto>(createdEmployee);
     }

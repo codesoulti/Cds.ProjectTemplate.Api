@@ -26,7 +26,7 @@ builder.Host.ConfigureHostOptions(options =>
 builder.AddDefaultLogging();
 
 // Registra as dependências das camadas (Infrastructure, Application, WebApi)
-DependencyResolver.RegisterDependecies(builder);
+DependencyResolver.RegisterDependecies(builder.Services, builder.Configuration);
 
 builder.Services.AddCorsConfiguration(builder.Configuration, builder.Environment)
                 .AddHangfireConfiguration(builder.Configuration)

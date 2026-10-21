@@ -4,6 +4,7 @@ using Cg.ProjectName.Infrastructure.Data.Configurations.DemoEmployees;
 using Cg.ProjectName.Infrastructure.Data.Configurations.DemoOfficies;
 using Cg.ProjectName.Infrastructure.Data.Contexts.Dapper;
 using Cg.ProjectName.Infrastructure.Data.Extensions;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cg.ProjectName.Infrastructure.Data.Contexts.EfCore;
@@ -29,6 +30,19 @@ public class CgProjectNameDbContext : DbContext
         modelBuilder.ApplyConfiguration(new DemoOfficeConfiguration());
 
         modelBuilder.ApplySoftDelete(SoftDeleteOptions.Enabled);
+
+        // Tabelas do Outbox Transacional do MassTransit (pacote
+        // MassTransit.EntityFrameworkCore) — usadas só quando
+        // AddRabbitMqConfiguration<TDbContext> é chamado com useOutbox: true
+        // (hoje, só pela WebApi; ver RabbitMqConfiguration/WebApiModuleInitializer).
+        // Precisa de uma migration própria (dotnet ef migrations add) depois
+        // desta mudança — não gerada automaticamente. AddInboxStateEntity()
+        // fica registrada mesmo sem uso hoje (nenhum consumer usa outbox do
+        // lado de recebimento) para não exigir uma segunda migration no dia
+        // em que isso for adotado.
+        modelBuilder.AddInboxStateEntity();
+        modelBuilder.AddOutboxMessageEntity();
+        modelBuilder.AddOutboxStateEntity();
 
         base.OnModelCreating(modelBuilder);
     }

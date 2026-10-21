@@ -3,7 +3,6 @@ using Cg.ProjectName.Domain.Interfaces.Repositories.Base;
 using Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoEmployees;
 using Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoOfficies;
 using Cg.ProjectName.Infrastructure.CrossCutting.Ioc.Configurations;
-using Cg.ProjectName.Infrastructure.CrossCutting.Messaging.Configurations;
 using Cg.ProjectName.Infrastructure.Data.Contexts.Dapper;
 using Cg.ProjectName.Infrastructure.Data.Contexts.EfCore;
 using Cg.ProjectName.Infrastructure.Data.Interceptors;
@@ -11,7 +10,6 @@ using Cg.ProjectName.Infrastructure.Data.Repositories.Base;
 using Cg.ProjectName.Infrastructure.Data.Repositories.Demos.DemoEmployees;
 using Cg.ProjectName.Infrastructure.Data.Repositories.Demos.DemoOfficies;
 using Cg.ProjectName.Infrastructure.Data.UnitOfWork;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,23 +18,23 @@ namespace Cg.ProjectName.Infrastructure.CrossCutting.Ioc.ModuleInitializers;
 
 public class InfrastructureModuleInitializer : IModuleInitializer
 {
-    public void Initialize(WebApplicationBuilder builder)
+    public void Initialize(IServiceCollection services, IConfiguration configuration)
     {
-        var services = builder.Services;
-
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException(
                 "Connection string 'DefaultConnection' não configurada em appsettings.json.");
 
         services
-            //.AddHangfireConfiguration(builder.Configuration)
-            .AddRedisConfiguration(builder.Configuration)
-            // WebApi só PUBLICA eventos de integração (não consome nada) —
-            // por isso nenhum "configureConsumers" é passado aqui. O Worker
-            // registra o mesmo barramento com seus consumers em Program.cs,
-            // já que ele usa um Generic Host puro e não passa por este
-            // ModuleInitializer (ver comentário em RabbitMqConfiguration).
-            .AddRabbitMqConfiguration(builder.Configuration);
+            //.AddHangfireConfiguration(configuration)
+            .AddRedisConfiguration(configuration);
+
+        // Mensageria (RabbitMQ/MassTransit) NÃO é registrada aqui de
+        // propósito: WebApi (publisher, sem consumers) e Worker (consumer,
+        // com AddConsumer<T>) precisam de configurações diferentes de
+        // AddRabbitMqConfiguration, e esse método aqui é compartilhado por
+        // ambos os hosts (ver DependencyResolver). Cada host chama
+        // AddRabbitMqConfiguration por conta própria: a WebApi via
+        // WebApiModuleInitializer, o Worker direto em Program.cs.
 
         // ---- EF Core: lado de escrita (comandos / agregados / Unit of Work) ----
         services.AddScoped<SoftDeleteInterceptor>();

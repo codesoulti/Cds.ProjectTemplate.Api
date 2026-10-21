@@ -7,9 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Hangfire.EntityFrameworkCore e Hangfire.MemoryStorage foram removidos
+         daqui: nada no projeto os usa. O storage real (UseSqlServerStorage)
+         vem do próprio pacote "Hangfire" (que já traz Hangfire.SqlServer
+         embutido), configurado centralmente em
+         Ioc/Configurations/HangfireConfiguration.cs — não há storage
+         alternativo (EF Core ou em memória) configurado em lugar nenhum. -->
     <PackageReference Include="Hangfire" Version="1.8.25" />
-    <PackageReference Include="Hangfire.EntityFrameworkCore" Version="0.9.0" />
-    <PackageReference Include="Hangfire.MemoryStorage" Version="1.8.1.2" />
     <PackageReference Include="Hangfire.NetCore" Version="1.8.25" />
   </ItemGroup>
 
@@ -23,6 +27,12 @@
          (mas não MassTransit.RabbitMQ, que é exclusivo de quem configura o
          transporte) transitivamente. -->
     <ProjectReference Include="..\Cg.ProjectName.Infrastructure.CrossCutting.Messaging\Cg.ProjectName.Infrastructure.CrossCutting.Messaging.csproj" />
+    <!-- Referenciado diretamente pelo mesmo motivo acima: Program.cs nomeia
+         CgProjectNameDbContext diretamente (como argumento de tipo genérico
+         de AddRabbitMqConfiguration<TDbContext>) — já vinha disponível
+         transitivamente via Ioc, mas o código deste projeto o usa por nome,
+         então ganha a referência explícita. -->
+    <ProjectReference Include="..\Cg.ProjectName.Infrastructure.Data\Cg.ProjectName.Infrastructure.Data.csproj" />
   </ItemGroup>
 
 </Project>

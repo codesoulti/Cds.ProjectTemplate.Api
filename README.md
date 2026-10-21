@@ -194,6 +194,7 @@ Toda configuração segue o padrão de camadas do .NET (`appsettings.json` → `
 | `RabbitMQ:Host` | Host do broker RabbitMQ | `localhost` (dev) |
 | `RabbitMQ:VirtualHost` | Virtual host do RabbitMQ | `/` |
 | `RabbitMQ:Username` / `RabbitMQ:Password` | Credenciais do RabbitMQ | `guest` / `guest` (dev) |
+| `RabbitMQ:OutboxQueryDelaySeconds` | Intervalo de polling do Outbox Transacional (só onde `useOutbox: true`, hoje só a WebApi) | `1` |
 | `CorsOrigins:AllowedOrigins` | Lista explícita de origens permitidas (produção/homologação) | vazio |
 | `Logging:EnableFileSink` | Habilita o sink de arquivo do Serilog, além do console | `true` |
 
@@ -201,7 +202,7 @@ Em **produção**, defina `CorsOrigins:AllowedOrigins` explicitamente — sem es
 
 ## Mensageria (RabbitMQ)
 
-Exemplo de mensageria assíncrona via [MassTransit](https://masstransit.io/) sobre RabbitMQ, cobrindo publisher e consumer em processos separados — ponto de partida para novas integrações orientadas a evento.
+Exemplo de mensageria assíncrona via [MassTransit](https://masstransit.io/) sobre RabbitMQ, cobrindo publisher e consumer em processos separados, com um **Outbox Transacional real** do lado do publisher — ponto de partida para novas integrações orientadas a evento.
 
 ```
 POST /api/DemoEmployee
@@ -209,13 +210,18 @@ POST /api/DemoEmployee
         ▼
 CreateDemoEmployeeHandler          (Cg.ProjectName.Application)
   1. cria o DemoEmployee
-  2. Enqueue(DemoEmployeeCreatedIntegrationEvent)   ← só acumula, não publica
-        │
+  2. PublishAsync(DemoEmployeeCreatedIntegrationEvent)   ← IPublishEndpoint.Publish por baixo;
+        │                                                   só acumula no escopo atual, não vai pro broker ainda
         ▼
 UnitOfWorkBehavior                 (Cg.ProjectName.Infrastructure.CrossCutting.Shared)
-  3. SaveChanges + Commit da transação
-  4. DispatchAsync()               ← só AGORA publica no RabbitMQ, e só se o commit deu certo
+  3. SaveChanges  ← o Outbox Transacional do MassTransit intercepta e grava a mensagem
+        │            na tabela OutboxMessage, como parte desta MESMA transação
+  4. Commit da transação
         │
+        ▼
+   tabela OutboxMessage (SQL Server)
+        │  (serviço de entrega em background, registrado pelo próprio MassTransit,
+        │   faz polling a cada RabbitMQ:OutboxQueryDelaySeconds)
         ▼
    RabbitMQ (fila "demo-employee-created-integration-event")
         │
@@ -224,11 +230,13 @@ DemoEmployeeCreatedIntegrationEventConsumer   (Cg.ProjectName.Worker, processo s
   5. loga o evento recebido (ponto de extensão para lógica real)
 ```
 
-- **`Cg.ProjectName.Infrastructure.CrossCutting.Messaging`** é quem sabe da existência do MassTransit/RabbitMQ — projeto próprio (não dentro de `Ioc`), pelo mesmo motivo de `Infrastructure.Data` ser separado: mensageria tende a crescer (novos eventos, novos consumers, políticas de retry) e merece um dono e um conjunto de pacotes próprios, em vez de inflar o projeto de composição. Contém `RabbitMqConfiguration` (a extensão `AddRabbitMqConfiguration`) e `IntegrationEventPublisher` (implementação de `IIntegrationEventPublisher`).
-- **Publisher = WebApi.** `Ioc` referencia `Messaging` e `InfrastructureModuleInitializer` chama `AddRabbitMqConfiguration` sem nenhum consumer — a API só publica.
-- **Consumer = Worker.** `Cg.ProjectName.Worker` referencia `Messaging` diretamente (além de `Ioc`, para o Hangfire) e chama a mesma extensão em `Program.cs`, passando `x.AddConsumer<DemoEmployeeCreatedIntegrationEventConsumer>()` — o Worker usa um Generic Host puro, por isso não passa pelos `ModuleInitializers` (que dependem de `WebApplicationBuilder`).
-- **Publicar só depois do commit.** `IIntegrationEventPublisher.Enqueue` apenas acumula o evento no escopo da requisição; `UnitOfWorkBehavior` é quem chama `DispatchAsync` — e só depois que a transação já foi commitada com sucesso. Isso evita publicar "funcionário criado" para um INSERT que acabou falhando. **Não é** um Outbox Pattern completo: não há tabela própria de eventos pendentes, então um crash do processo exatamente entre o commit e o dispatch ainda perde o evento — para essa garantia mais forte, evolua para um outbox real.
-- **Adicionando um novo evento:** crie o contrato em `Cg.ProjectName.Application/IntegrationEvents/`, chame `IIntegrationEventPublisher.Enqueue(...)` no Handler correspondente (ele já é injetável em qualquer Handler) e crie um `IConsumer<TEvento>` onde fizer sentido consumi-lo (no Worker, ou em outro serviço), registrando-o com `x.AddConsumer<...>()`.
+- **`Cg.ProjectName.Infrastructure.CrossCutting.Messaging`** é quem sabe da existência do MassTransit/RabbitMQ — projeto próprio (não dentro de `Ioc`), pelo mesmo motivo de `Infrastructure.Data` ser separado: mensageria tende a crescer (novos eventos, novos consumers, políticas de retry) e merece um dono e um conjunto de pacotes próprios, em vez de inflar o projeto de composição. Contém `RabbitMqConfiguration` (a extensão `AddRabbitMqConfiguration<TDbContext>`) e `IntegrationEventPublisher` (implementação de `IIntegrationEventPublisher`). Continua sem `ProjectReference` para `Infrastructure.Data` — `TDbContext` é só uma restrição genérica (`where TDbContext : DbContext`), não o tipo concreto.
+- **Publisher = WebApi, com Outbox Transacional ligado.** `WebApiModuleInitializer` chama `AddRabbitMqConfiguration<CgProjectNameDbContext>(configuration, useOutbox: true)` — sem nenhum consumer. `useOutbox: true` liga `AddEntityFrameworkOutbox<TDbContext>`/`UseBusOutbox` (pacote `MassTransit.EntityFrameworkCore`): qualquer `Publish` feito no mesmo escopo de uma requisição passa a ser gravado na tabela `OutboxMessage` como parte da transação do `SaveChanges`, em vez de ir direto pro broker.
+- **Consumer = Worker, sem outbox.** `Cg.ProjectName.Worker` referencia `Messaging` diretamente (além de `Ioc`, para o Hangfire) e chama a mesma extensão em `Program.cs`, passando `x.AddConsumer<DemoEmployeeCreatedIntegrationEventConsumer>()` e **sem** `useOutbox` (fica no default `false`) — o outbox só faz sentido do lado de quem publica.
+- **Por que sobrevive a um crash agora.** Antes, `IIntegrationEventPublisher.Enqueue`/`DispatchAsync` acumulava o evento em memória e só publicava depois que `UnitOfWorkBehavior` confirmasse o commit — um crash do processo exatamente entre o commit e o dispatch perdia o evento (nenhum registro em disco). Agora `PublishAsync` já grava a mensagem na tabela `OutboxMessage`, na MESMA transação do dado de negócio: ou os dois são persistidos, ou nenhum é. A entrega ao RabbitMQ fica de fato desacoplada da requisição HTTP, feita por um serviço de polling que roda dentro do próprio processo da WebApi.
+- **Continua at-least-once, não exactly-once.** Uma falha entre "publicar no broker" e "marcar como entregue" pode reentregar a mesma mensagem — o Consumer precisa continuar idempotente (hoje `DemoEmployeeCreatedIntegrationEventConsumer` só loga, então não há efeito colateral a duplicar; qualquer consumer futuro com efeito externo real precisa tratar isso).
+- **Migration necessária.** `CgProjectNameDbContext.OnModelCreating` registra as entidades do outbox (`AddInboxStateEntity`/`AddOutboxMessageEntity`/`AddOutboxStateEntity`, de `MassTransit.EntityFrameworkCore`) — isso NÃO gera a tabela sozinho. Depois de atualizar os pacotes (`dotnet restore`), rode `dotnet ef migrations add AddMassTransitOutbox --project src/Cg.ProjectName.Infrastructure.Data --startup-project src/Cg.ProjectName.WebApi` e revise o SQL gerado antes de aplicar — este repositório não inclui essa migration pronta (o ambiente usado para montá-lo não tem o SDK do .NET nem `dotnet-ef` disponíveis para gerá-la e validá-la).
+- **Adicionando um novo evento:** crie o contrato em `Cg.ProjectName.Application/IntegrationEvents/`, chame `await IIntegrationEventPublisher.PublishAsync(...)` no Handler correspondente (ele já é injetável em qualquer Handler) e crie um `IConsumer<TEvento>` onde fizer sentido consumi-lo (no Worker, ou em outro serviço), registrando-o com `x.AddConsumer<...>()`.
 
 ### Rodando localmente
 
@@ -281,6 +289,9 @@ A especificação completa (schemas, exemplos de request/response) está dispon�
 Este repositório é publicado com transparência sobre o que ainda falta — nenhum desses pontos foi escondido:
 
 - **Sem autenticação/autorização.** Não há nenhum esquema de autenticação configurado (o projeto `Cg.ProjectName.Infrastructure.CrossCutting.Security` existe como stub reservado para isso). Antes de qualquer uso além de demonstração/portfólio, é necessário adicionar um esquema real (JWT Bearer, OAuth2/OpenID Connect, etc.), proteger os controllers com `[Authorize]` e habilitar o `AddSecurityRequirement` já preparado (comentado) em `SwaggerConfiguration`.
-- **Mensageria sem Outbox real.** Ver [Mensageria (RabbitMQ)](#mensageria-rabbitmq) — o "outbox em memória" atual não sobrevive a um crash do processo entre o commit da transação e a publicação da mensagem. Aceitável para o exemplo; avalie um Outbox Pattern completo (tabela própria + publicador dedicado) antes de depender disso para um fluxo crítico de negócio.
-- **`Cg.ProjectName.Worker` não roda `DependencyResolver.RegisterDependecies`.** Esse método (que registra `IDemoEmployeeMaintenanceJob`, repositórios etc. via os `ModuleInitializers`) é chamado só em `Cg.ProjectName.WebApi/Program.cs`, porque `IModuleInitializer.Initialize` recebe um `WebApplicationBuilder` — tipo que o Worker (Generic Host puro) nunca tem. Na prática, o job recorrente do Hangfire (`demo-employee-maintenance`) provavelmente falha ao resolver `IDemoEmployeeMaintenanceJob` em tempo de execução. Isso é anterior a este exemplo de mensageria (que foi construído contornando o problema — `RabbitMqConfiguration` é chamado diretamente via extensão em `IServiceCollection`, sem depender do `DependencyResolver`) — mas vale corrigir antes de contar com o Worker para jobs reais: extraia os registros de `ApplicationModuleInitializer`/`InfrastructureModuleInitializer` para extensões sobre `IServiceCollection` (como já é o padrão de `RedisConfiguration`/`HangfireConfiguration`/`RabbitMqConfiguration`) e chame-as também em `Worker/Program.cs`.
+- **A migration do Outbox Transacional ainda não foi gerada.** Ver [Mensageria (RabbitMQ)](#mensageria-rabbitmq) — `CgProjectNameDbContext` já registra as entidades do outbox, mas ninguém rodou `dotnet ef migrations add` neste repositório (sandbox sem SDK do .NET). Rode o comando documentado lá antes do primeiro `dotnet run`/deploy depois de puxar esta mudança.
 - Este README documenta o estado do template; ajuste-o conforme o projeto real evoluir a partir daqui.
+
+> **Resolvido:** `Cg.ProjectName.Worker` não registrava `IDemoEmployeeMaintenanceJob`, repositórios, `DbContext` etc., porque `IModuleInitializer.Initialize` recebia um `WebApplicationBuilder` — tipo que o Worker (Generic Host puro) nunca tem — e por isso `DependencyResolver.RegisterDependecies` só era chamado em `Cg.ProjectName.WebApi/Program.cs`. `IModuleInitializer` agora recebe `IServiceCollection`/`IConfiguration` direto (em vez de `WebApplicationBuilder`), e `DependencyResolver` ganhou `RegisterWorkerDependencies(services, configuration)` — chamado em `Worker/Program.cs` — que registra Infrastructure + Application sem o `WebApiModuleInitializer` (controllers/health checks HTTP) e sem mensageria própria (o Worker continua registrando o bus com seus consumers direto em `Program.cs`, para não registrar o MassTransit duas vezes). O projeto órfão `Cg.ProjectName.Service` (stub sem uso, fora do `.slnx`) e a referência inexistente a `Cg.ProjectName.Web` no `Dockerfile` também foram removidos.
+>
+> **Resolvido:** a mensageria evoluiu de um "outbox em memória" (perdia o evento se o processo caísse entre o commit e a publicação) para um Outbox Transacional real via `MassTransit.EntityFrameworkCore` (`AddEntityFrameworkOutbox`/`UseBusOutbox`) — a mensagem é gravada na mesma transação do dado de negócio. Ver [Mensageria (RabbitMQ)](#mensageria-rabbitmq). Falta só gerar/aplicar a migration (ver bullet acima).

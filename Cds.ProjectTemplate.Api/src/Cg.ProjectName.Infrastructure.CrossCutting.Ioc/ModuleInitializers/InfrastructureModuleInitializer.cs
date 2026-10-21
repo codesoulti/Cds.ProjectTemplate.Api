@@ -1,0 +1,76 @@
+﻿using Cg.ProjectName.Application.Interfaces.Shared;
+using Cg.ProjectName.Domain.Interfaces.Repositories.Base;
+using Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoEmployees;
+using Cg.ProjectName.Domain.Interfaces.Repositories.Demos.DemoOfficies;
+using Cg.ProjectName.Infrastructure.CrossCutting.Ioc.Configurations;
+using Cg.ProjectName.Infrastructure.Data.Contexts.Dapper;
+using Cg.ProjectName.Infrastructure.Data.Contexts.EfCore;
+using Cg.ProjectName.Infrastructure.Data.Interceptors;
+using Cg.ProjectName.Infrastructure.Data.Repositories.Base;
+using Cg.ProjectName.Infrastructure.Data.Repositories.Demos.DemoEmployees;
+using Cg.ProjectName.Infrastructure.Data.Repositories.Demos.DemoOfficies;
+using Cg.ProjectName.Infrastructure.Data.UnitOfWork;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Cg.ProjectName.Infrastructure.CrossCutting.Ioc.ModuleInitializers;
+
+public class InfrastructureModuleInitializer : IModuleInitializer
+{
+    public void Initialize(IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException(
+                "Connection string 'DefaultConnection' não configurada em appsettings.json.");
+
+        services
+            //.AddHangfireConfiguration(configuration)
+            .AddRedisConfiguration(configuration);
+
+        // Mensageria (RabbitMQ/MassTransit) NÃO é registrada aqui de
+        // propósito: WebApi (publisher, sem consumers) e Worker (consumer,
+        // com AddConsumer<T>) precisam de configurações diferentes de
+        // AddRabbitMqConfiguration, e esse método aqui é compartilhado por
+        // ambos os hosts (ver DependencyResolver). Cada host chama
+        // AddRabbitMqConfiguration por conta própria: a WebApi via
+        // WebApiModuleInitializer, o Worker direto em Program.cs.
+
+        // ---- EF Core: lado de escrita (comandos / agregados / Unit of Work) ----
+        services.AddScoped<SoftDeleteInterceptor>();
+
+        services.AddDbContext<CgProjectNameDbContext>((serviceProvider, options) =>
+        {
+            var interceptor = serviceProvider
+                .GetRequiredService<SoftDeleteInterceptor>();
+
+            options
+                .UseSqlServer(connectionString, sqlServerOptions =>
+                    // Sem isso, uma falha transitória de rede/failover contra o
+                    // SQL Server (comum em Azure SQL, e não incomum em qualquer
+                    // SQL Server sob load balancer) vira uma SqlException crua
+                    // na primeira tentativa, em vez de uma nova tentativa
+                    // automática. Combinado com UnitOfWork.ExecuteInStrategyAsync
+                    // (ver UnitOfWorkBehavior/UnitOfWork), que é obrigatório
+                    // assim que EnableRetryOnFailure está ligado e existem
+                    // transações iniciadas manualmente pela aplicação.
+                    sqlServerOptions.EnableRetryOnFailure(
+                        maxRetryCount: 3,
+                        maxRetryDelay: TimeSpan.FromSeconds(5),
+                        errorNumbersToAdd: null))
+                .AddInterceptors(interceptor);
+        });
+
+        services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // ---- Dapper: lado de leitura (queries otimizadas, sem tracking) ----
+        services.AddSingleton<IDbConnectionFactory>(
+            _ => new SqlConnectionFactory(connectionString));
+
+        services.AddScoped<IDemoEmployeeReadRepository, DemoEmployeeReadRepository>();
+        services.AddScoped<IDemoEmployeeRepository, DemoEmployeeRepository>();
+        services.AddScoped<IDemoOfficeReadRepository, DemoOfficeReadRepository>();
+        services.AddScoped<IDemoOfficeRepository, DemoOfficeRepository>();
+    }
+}

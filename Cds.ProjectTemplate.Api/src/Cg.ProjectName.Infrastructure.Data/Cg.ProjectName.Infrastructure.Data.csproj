@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Cg.ProjectName.Infrastructure.Data</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- EF Core - lado de escrita (comandos / agregados / Unit of Work) -->
+   
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+
+    <!-- Outbox Transacional do MassTransit — CgProjectNameDbContext.OnModelCreating
+         chama AddInboxStateEntity()/AddOutboxMessageEntity()/AddOutboxStateEntity(),
+         extensões deste pacote (não traz RabbitMQ nem qualquer transporte:
+         só os modelos de tabela do outbox, mesma versão do MassTransit
+         usado em Infrastructure.CrossCutting.Messaging — confira no
+         NuGet.org antes do primeiro restore real). -->
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.3.4" />
+
+    <!-- Dapper - lado de leitura (queries otimizadas, sem tracking) -->
+    <PackageReference Include="Dapper" Version="2.1.79" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cg.ProjectName.Application\Cg.ProjectName.Application.csproj" />
+    <ProjectReference Include="..\Cg.ProjectName.Domain\Cg.ProjectName.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
